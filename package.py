@@ -1,6 +1,6 @@
 name = "ngskintools2"
 
-version = "2.1.6"
+version = "2.1.6.r1"
 
 authors = [
     "Viktoras Makauskas",
