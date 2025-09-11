@@ -1,3 +1,4 @@
+from maya import OpenMaya
 from maya import OpenMayaUI as omui
 from maya import cmds
 
@@ -186,7 +187,8 @@ def build_ui(parent):
     dialogs.promptsParent = window
 
     if config.checkForUpdatesAtStartup():
-        updatewindow.silent_check_and_show_if_available(qt.mainWindow)
+        #updatewindow.silent_check_and_show_if_available(qt.mainWindow)
+        OpenMaya.MGlobal.displayWarning("ngSkinTool2 - check for updates skipped")
 
     return window, options
 
