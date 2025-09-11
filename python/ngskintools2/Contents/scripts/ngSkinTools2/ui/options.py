@@ -128,6 +128,9 @@ class Config(Object):
 
     mirrorInfluencesDefaults = build_config_property('mirrorInfluencesDefaults', "{}")  # type: string
 
+    InfluencesSortUnsorted = 'unsorted'
+    InfluencesSortDescending = 'descending'
+
     def __init__(self):
         from ngSkinTools2.api.mirror import MirrorOptions
 
@@ -138,6 +141,9 @@ class Config(Object):
 
         self.checkForUpdatesAtStartup = self.build_observable_value('checkForUpdatesAtStartup', True)
         self.influences_show_used_influences_only = self.build_observable_value("influencesViewShowUsedInfluencesOnly", False)
+
+        # influences sort is not a simple "true/false" flag to allow different sorting methods in the future.
+        self.influences_sort = self.build_observable_value("influencesSort", Config.InfluencesSortUnsorted)
 
         default_mirror_options = MirrorOptions()
         self.mirror_direction = self.build_observable_value("mirrorDirection", default_mirror_options.direction)

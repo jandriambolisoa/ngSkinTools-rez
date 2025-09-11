@@ -66,13 +66,22 @@ class NumberSliderGroup(Object):
 
         @qt.on(spinner.valueChanged)
         def update_slider():
+            slider_value = self.__to_slider_value(spinner.value())
+            if slider.value() == slider_value:
+                return
             with qt.signals_blocked(slider):
-                slider.setValue(self.__to_slider_value(spinner.value()))
+                slider.setValue(slider_value)
             self.valueChanged.emit()
 
         @qt.on(slider.valueChanged)
-        def slider_updated():
-            spinner.setValue(self.__from_slider_value(slider.value()))
+        def slider_dragging():
+            slider_value = self.__from_slider_value(slider.value())
+            with qt.signals_blocked(spinner):
+                spinner.setValue(slider_value)
+
+        @qt.on(slider.sliderReleased)
+        def slider_drag_finished():
+            self.valueChanged.emit()
 
         self.update_slider = update_slider
 
@@ -124,8 +133,10 @@ class NumberSliderGroup(Object):
         return value
 
     def set_value(self, value):
-        if self.value != value:
-            self.spinner.setValue(value)
+        if self.value == value:
+            return
+        self.spinner.setValue(value)
+        self.update_slider()
 
     def set_enabled(self, enabled):
         self.spinner.setEnabled(enabled)

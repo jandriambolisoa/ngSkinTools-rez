@@ -8,7 +8,6 @@ from ngSkinTools2 import cleanup, signal
 from ngSkinTools2.api import Layers, PaintTool, events, mirror, plugin
 from ngSkinTools2.api.log import getLogger
 from ngSkinTools2.api.python_compatibility import Object
-from ngSkinTools2.licenseClient import LicenseClient
 from ngSkinTools2.observableValue import ObservableValue
 from ngSkinTools2.signal import SignalHub
 
@@ -63,7 +62,6 @@ class Session(Object):
         self.events = None  # type: events.Events
         self.signal_hub = None  # type: SignalHub
         self.context = None  # type: Context
-        self.licenseClient = LicenseClient()
 
         self.referenceId = 0
 
@@ -75,8 +73,6 @@ class Session(Object):
         plugin.load_plugin()
 
         self.paint_tool = PaintTool()
-
-        self.licenseClient.load_deferred()
 
         self.state = State()
         self.events = events.Events(self.state)

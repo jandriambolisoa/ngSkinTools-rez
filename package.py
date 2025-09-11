@@ -1,10 +1,11 @@
 name = "ngskintools2"
 
-version = "2.1.6.r1"
+version = "2.4.0"
 
 authors = [
     "Viktoras Makauskas",
     "Jeremy Andriambolisoa",
+    "Leo Depoix",
 ]
 
 description = \
@@ -17,7 +18,7 @@ description = \
 
 requires = [
     "python-3+",
-    "maya-2025+"
+    "maya-2026"
 ]
 
 uuid = "ngskintools.ngskintools2"
@@ -25,6 +26,6 @@ uuid = "ngskintools.ngskintools2"
 build_command = 'python {root}/build.py {install}'
 
 def commands():
-    env.MAYA_PLUG_IN_PATH.append("{root}/python/ngskintools2/Contents/plug-ins/2025")
+    env.MAYA_PLUG_IN_PATH.append("{root}/python/ngskintools2/Contents/plug-ins/2026")
     env.PYTHONPATH.append("{root}/python/ngskintools2/Contents/scripts")
     

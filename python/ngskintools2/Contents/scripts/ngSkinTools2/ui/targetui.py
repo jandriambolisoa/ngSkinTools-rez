@@ -1,9 +1,9 @@
 from ngSkinTools2 import signal
+from ngSkinTools2.api.influence_names import InfluenceNameFilter
 from ngSkinTools2.api.pyside import QAction, QtCore, QtWidgets
 from ngSkinTools2.api.session import Session
 from ngSkinTools2.operations import import_v1_actions
 from ngSkinTools2.ui import influencesview, layersview, qt
-from ngSkinTools2.ui.influencesview import InfluenceNameFilter
 from ngSkinTools2.ui.layout import scale_multiplier
 
 
@@ -15,7 +15,7 @@ def build_layers_ui(parent, actions, session):
     :type parent: QWidget
     """
 
-    influencesFilter = InfluenceNameFilter()
+    influences_filter = InfluenceNameFilter()
 
     def build_infl_filter():
         img = qt.image_icon("clear-input-white.png")
@@ -27,13 +27,14 @@ def build_layers_ui(parent, actions, session):
         filter.setEditable(True)
         filter.lineEdit().setPlaceholderText("Search...")
         result.addWidget(filter)
+        # noinspection PyShadowingNames
         clear = QAction(result)
         clear.setIcon(img)
         filter.lineEdit().addAction(clear, QtWidgets.QLineEdit.TrailingPosition)
 
         @qt.on(filter.editTextChanged)
         def filter_edited():
-            influencesFilter.set_filter_string(filter.currentText())
+            influences_filter.set_filter_string(filter.currentText())
 
             clear.setVisible(len(filter.currentText()) != 0)
 
@@ -61,7 +62,7 @@ def build_layers_ui(parent, actions, session):
     layout = QtWidgets.QVBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(3)
-    influences = influencesview.build_view(parent, actions, session, filter=influencesFilter)
+    influences = influencesview.build_view(parent, actions, session, filter=influences_filter)
     layout.addWidget(influences)
     layout.addLayout(build_infl_filter())
     split.addWidget(qt.wrap_layout_into_widget(layout))
@@ -75,39 +76,6 @@ def build_no_layers_ui(parent, actions, session):
     :type actions: ngSkinTools2.ui.actions.Actions
     :type session: Session
     """
-
-    def build_evaluation_banner():
-        title = QtWidgets.QLabel("Evaluation/Non-Commercial License")
-        title.setWordWrap(True)
-        title.setStyleSheet("font-weight: bold; border: none;")
-        title.setAlignment(QtCore.Qt.AlignCenter)
-
-        # detail = QtWidgets.QLabel(
-        #     "Current license permits plugin usage for evaluation purposes and non-commercial projects. "
-        #     'Some features may be restricted to commercial licenses only. <a href="http://www.ngskintools.com">more</a>')
-        detail = QtWidgets.QLabel("Current license permits plugin usage for evaluation purposes and non-commercial projects.")
-        detail.setOpenExternalLinks(True)
-        detail.setWordWrap(True)
-        detail.setAlignment(QtCore.Qt.AlignCenter)
-        detail.setStyleSheet("border: none;")
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.addWidget(title)
-        layout.addWidget(detail)
-
-        result = QtWidgets.QGroupBox()
-        result.setLayout(layout)
-
-        result.setStyleSheet("border: 1px solid #938976; background-color: #fcf8e3; " "color: #8a6d3b;")
-
-        @signal.on(session.licenseClient.statusChanged, qtParent=parent)
-        def update_banner_visibility():
-            result.setVisible(session.licenseClient.should_show_evaluation_banner())
-
-        update_banner_visibility()
-
-        return result
 
     layout = QtWidgets.QVBoxLayout()
     layout.setContentsMargins(30, 30, 30, 30)
@@ -123,7 +91,6 @@ def build_no_layers_ui(parent, actions, session):
     layout.addWidget(selection_note)
     layout.addWidget(qt.bind_action_to_button(actions.import_v1, QtWidgets.QPushButton()))
     layout.addWidget(qt.bind_action_to_button(actions.initialize, QtWidgets.QPushButton()))
-    layout.addWidget(build_evaluation_banner())
     layout.addStretch(3)
 
     layout_widget = qt.wrap_layout_into_widget(layout)
@@ -153,7 +120,8 @@ def build_no_layers_ui(parent, actions, session):
 
 def build_target_ui(parent, actions, session):
     """
-
+    :param actions:
+    :param parent:
     :type session: Session
     """
     result = QtWidgets.QStackedWidget()

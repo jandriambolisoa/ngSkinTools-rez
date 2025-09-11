@@ -4,6 +4,8 @@ from maya import cmds
 
 from ngSkinTools2.api import plugin
 
+from .influenceMapping import InfluenceInfo
+
 
 def get_related_skin_cluster(target):
     """
@@ -24,8 +26,6 @@ def get_related_data_node(target):
 
 
 def unserialize_influences_from_json_data(info):
-    from .influenceMapping import InfluenceInfo
-
     def as_influence_info(data):
         influence = InfluenceInfo()
         influence.pivot = data['pivot']

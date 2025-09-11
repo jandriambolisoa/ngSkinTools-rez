@@ -4,15 +4,7 @@ ngSkinTools Software License Agreement.
 This is a legal agreement between you and ngSkinTools author (Viktoras Makauskas) covering your use of
 ngSkinTools (the "Software").
 
-1) ngSkinTools is provided as freeware, but only for private, non-commercial use.
-
-1a) ngSkinTools is free for educational use.
-
-1b) If you intend to use ngSkinTools at your place of business or for commercial purposes, please register
-and purchase it. Commercial users: please contact me by E-Mail for prices, discounts and payment methods.
-
-1c) If you buy ngSkinTools license(s), ngSkinTools hereby grants to you a perpetual, worldwide, fully paid-up,
-non-exclusive license to use the Software solely for your internal business purposes.
+1) ngSkinTools is provided as freeware.
 
 2) ngSkinTools Software is owned by Viktoras Makauskas and is protected by copyright laws and international
 treaty provisions. Therefore, you must treat the Software like any other copyrighted material.
