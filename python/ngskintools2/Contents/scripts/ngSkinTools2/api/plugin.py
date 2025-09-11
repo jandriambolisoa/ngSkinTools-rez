@@ -27,11 +27,6 @@ def ngst2tools(**kwargs):
     return result
 
 
-def ngst2License(**kwargs):
-    log.debug("ngst2license [%r]", kwargs)
-    return cmds.ngst2License(**kwargs)
-
-
 def ngst2PaintContext():
     log.debug("ngst2PaintContext()")
     return cmds.ngst2PaintContext()

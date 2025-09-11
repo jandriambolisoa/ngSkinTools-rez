@@ -1,4 +1,4 @@
-from ngSkinTools2 import api, signal
+from ngSkinTools2 import signal
 from ngSkinTools2.api.log import getLogger
 from ngSkinTools2.api.mirror import MirrorOptions
 from ngSkinTools2.api.pyside import QtCore, QtWidgets
@@ -9,30 +9,29 @@ from ngSkinTools2.ui.layout import TabSetup, createTitledRow
 log = getLogger("tab layer effects")
 
 
-def checkStateFromBooleanStates(states):
+def check_state_from_boolean_states(states):
     """
     for a list of booleans, return checkbox check state - one of Qt.Checked, Qt.Unchecked and Qt.PartiallyChecked
 
     :type states: list[bool]
     """
-    currentState = None
+    current_state = None
     for i in states:
-        if currentState is None:
-            currentState = i
+        if current_state is None:
+            current_state = i
             continue
 
-        if i != currentState:
+        if i != current_state:
             return QtCore.Qt.PartiallyChecked
 
-    if currentState:
+    if current_state:
         return QtCore.Qt.Checked
 
     return QtCore.Qt.Unchecked
 
 
-def build_ui(parent):
+def build_ui():
     def list_layers():
-        # type: () -> list[api.Layer]
         return [] if not session.state.layersAvailable else session.context.selected_layers(default=[])
 
     def build_properties():
@@ -107,11 +106,11 @@ def build_ui(parent):
         def update_values():
             layers = list_layers()
             with qt.signals_blocked(influences):
-                influences.setCheckState(checkStateFromBooleanStates([i.effects.mirror_weights for i in layers]))
+                influences.setCheckState(check_state_from_boolean_states([i.effects.mirror_weights for i in layers]))
             with qt.signals_blocked(mask):
-                mask.setCheckState(checkStateFromBooleanStates([i.effects.mirror_mask for i in layers]))
+                mask.setCheckState(check_state_from_boolean_states([i.effects.mirror_mask for i in layers]))
             with qt.signals_blocked(dq):
-                dq.setCheckState(checkStateFromBooleanStates([i.effects.mirror_dq for i in layers]))
+                dq.setCheckState(check_state_from_boolean_states([i.effects.mirror_dq for i in layers]))
             with qt.signals_blocked(mirror_direction):
                 qt.select_data(mirror_direction, MirrorOptions.directionPositiveToNegative if not layers else layers[0].effects.mirror_direction)
 
@@ -142,21 +141,21 @@ def build_ui(parent):
         prune_weight.set_value(prune_weight.min_value)
         prune_weight.set_expo("start", 3)
 
-        update_guard = qt.updateGuard()
-
         @signal.on(session.events.targetChanged)
         def update_ui():
             group.setEnabled(session.state.layersAvailable)
 
-            with update_guard:
-                prune_weight.set_enabled(session.state.layersAvailable)
-                if session.state.layersAvailable:
+            if session.state.layersAvailable:
+                with qt.signals_blocked(use_max_influences):
                     use_max_influences.setChecked(session.state.layers.influence_limit_per_vertex != 0)
+                with qt.signals_blocked(max_influences):
                     max_influences.set_value(session.state.layers.influence_limit_per_vertex if use_max_influences.isChecked() else 4)
+                with qt.signals_blocked(use_prune_weight):
                     use_prune_weight.setChecked(session.state.layers.prune_weights_filter_threshold != 0)
+                with qt.signals_blocked(prune_weight):
                     prune_weight.set_value(session.state.layers.prune_weights_filter_threshold if use_prune_weight.isChecked() else 0.0001)
 
-                update_ui_enabled()
+            update_ui_enabled()
 
         def update_ui_enabled():
             max_influences.set_enabled(use_max_influences.isChecked())
@@ -165,8 +164,7 @@ def build_ui(parent):
         @qt.on(use_max_influences.stateChanged, use_prune_weight.stateChanged)
         @signal.on(max_influences.valueChanged, prune_weight.valueChanged)
         def update_values():
-            if update_guard.updating:
-                return
+            log.info("updating effects tab")
 
             if session.state.layersAvailable:
                 session.state.layers.influence_limit_per_vertex = max_influences.value() if use_max_influences.isChecked() else 0
@@ -194,9 +192,9 @@ def build_ui(parent):
     tab.innerLayout.addStretch()
 
     @signal.on(session.events.targetChanged, qtParent=tab.tabContents)
-    def updateTabEnabled():
+    def update_tab_enabled():
         tab.tabContents.setEnabled(session.state.layersAvailable)
 
-    updateTabEnabled()
+    update_tab_enabled()
 
     return tab.tabContents

@@ -238,9 +238,10 @@ def build_ui(parent, global_actions):
 
         @on_signal(et.tool_settings_changed, scope=layout)
         def update_ui():
-            log.info("updated paint settings ui")
+            log.info("updating paint settings ui")
             log.info("brush mode:%s, brush shape: %s", paint.mode, paint.brush_shape)
             paint.update_plugin_brush_radius()
+            paint.update_plugin_brush_intensity()
 
             with qt.signals_blocked(intensity):
                 intensity.set_value(paint.intensity)
@@ -316,7 +317,7 @@ def build_ui(parent, global_actions):
         influences_display.setCurrentIndex(paint.display_settings.weights_display_mode)
 
         display_toolbar = QtWidgets.QToolBar()
-        display_toolbar.addAction(global_actions.randomizeInfluencesColors)
+        display_toolbar.addAction(global_actions.randomize_influences_colors)
 
         @qt.on(influences_display.currentIndexChanged)
         def influences_display_changed():
@@ -392,8 +393,8 @@ def build_ui(parent, global_actions):
             show_effects.setChecked(ds.layer_effects_display)
             show_masked.setChecked(ds.display_masked)
             show_selected_verts_only.setChecked(ds.show_selected_verts_only)
-            global_actions.randomizeInfluencesColors.setEnabled(ds.weights_display_mode == WeightsDisplayMode.allInfluences)
-            display_toolbar.setVisible(global_actions.randomizeInfluencesColors.isEnabled())
+            global_actions.randomize_influences_colors.setEnabled(ds.weights_display_mode == WeightsDisplayMode.allInfluences)
+            display_toolbar.setVisible(global_actions.randomize_influences_colors.isEnabled())
 
             if ds.weights_display_mode == WeightsDisplayMode.allInfluences:
                 wireframe_color_button.set_color(ds.wireframe_color)

@@ -59,10 +59,6 @@ def show(parent):
         result.setLayout(layout)
         layout.setContentsMargins(30, 30, 30, 30)
 
-        status = session.licenseClient.current_status()
-        if status.licensed_to != "":
-            layout.addWidget(QtWidgets.QLabel("This product is licensed to:"))
-            layout.addWidget(QtWidgets.QLabel("<strong>" + escape(status.licensed_to) + "</strong>"))
         return result
 
     # noinspection PyShadowingNames
