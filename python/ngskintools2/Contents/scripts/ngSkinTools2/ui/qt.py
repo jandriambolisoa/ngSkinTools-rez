@@ -25,17 +25,6 @@ class SignalBlockContext(Object):
         self.widget.blockSignals(self.prevState)
 
 
-class updateGuard(Object):
-    def __init__(self):
-        self.updating = False
-
-    def __enter__(self):
-        self.updating = True
-
-    def __exit__(self, *args):
-        self.updating = False
-
-
 def on(*signals):
     """
     decorator for function: list signals that should fire for this function.

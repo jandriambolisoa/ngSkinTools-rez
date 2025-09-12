@@ -12,7 +12,6 @@ from . import (
     aboutwindow,
     dialogs,
     hotkeys_setup,
-    licensewindow,
     qt,
     tabLayerEffects,
     tabMirror,
@@ -70,15 +69,13 @@ def build_menu(parent, actions):
     sub.addAction(actions.toolsDeleteCustomNodes)
 
     sub = top_level_menu("View")
-    sub.addAction(actions.showUsedInfluencesOnly)
+    sub.addAction(actions.show_used_influences_only)
 
     sub = top_level_menu("Help")
     sub.addAction(actions.documentation.user_guide)
     sub.addAction(actions.documentation.api_root)
     sub.addAction(actions.documentation.changelog)
     sub.addAction(actions.documentation.contact)
-    sub.addSeparator()
-    sub.addAction("Register...").triggered.connect(lambda: licensewindow.show(parent))
     sub.addSeparator()
     sub.addAction(actions.check_for_updates)
     sub.addAction("About...").triggered.connect(lambda: aboutwindow.show(parent))
@@ -112,8 +109,8 @@ def build_ui(parent):
 
     tabs.addTab(tabPaint.build_ui(tabs, actions), "Paint")
     tabs.addTab(tabSetWeights.build_ui(tabs), "Set Weights")
-    tabs.addTab(tabMirror.buildUI(tabs), "Mirror")
-    tabs.addTab(tabLayerEffects.build_ui(tabs), "Effects")
+    tabs.addTab(tabMirror.build_ui(tabs), "Mirror")
+    tabs.addTab(tabLayerEffects.build_ui(), "Effects")
     tabs.addTab(tabTools.build_ui(actions, session), "Tools")
 
     @signal.on(options.current_tab.changed)
@@ -154,29 +151,9 @@ def build_ui(parent):
 
         return w, text.setText
 
-    def build_license_error():
-        label, set_text = build_icon_label()
-
-        @signal.on(session.licenseClient.statusChanged, qtParent=parent)
-        def update_license_error():
-            log.info("updating license status")
-            status = session.licenseClient.current_status()
-            label.setVisible(status.has_errors())
-            if label.isVisible():
-                set_text("There is a problem with your license: " + status.status_description)
-
-        update_license_error()
-
-        return label
-
-    error_section = QtWidgets.QVBoxLayout()
-    error_section.addWidget(build_license_error())
-    error_section.setContentsMargins(0, 0, 0, 0)
-
     layout = QtWidgets.QVBoxLayout(window)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.addWidget(build_menu(window, actions))
-    layout.addLayout(error_section)
     layout.addWidget(split)
 
     window.setLayout(layout)

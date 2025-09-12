@@ -1,76 +1,19 @@
-import re
-
-from maya import cmds
-
 from ngSkinTools2 import signal
+from ngSkinTools2.api import influence_names
 from ngSkinTools2.api.influenceMapping import InfluenceInfo
 from ngSkinTools2.api.layers import Layer
 from ngSkinTools2.api.log import getLogger
 from ngSkinTools2.api.pyside import QtCore, QtGui, QtWidgets
-from ngSkinTools2.api.python_compatibility import Object
 from ngSkinTools2.api.target_info import list_influences
-from ngSkinTools2.signal import Signal
-from ngSkinTools2.ui import qt
+from ngSkinTools2.ui import actions, qt
 from ngSkinTools2.ui.layout import scale_multiplier
+from ngSkinTools2.ui.options import Config, config
 
 log = getLogger("influencesView")
 _ = Layer  # only imported for type reference
 
 
-class InfluenceNameFilter(Object):
-    """
-    simple helper object to match against filter strings;
-    accepts filter as a string, breaks it down into lowercase tokens, and
-    matches values in non-case sensitive way
-
-    e.g. filter "leg arm spines" matches "leg", "left_leg",
-    "R_arm", but does not match "spine"
-
-    in a  special case of empty filter, returns true for isMatch
-    """
-
-    def __init__(self):
-        self.matchers = []
-        self.changed = Signal("filter changed")
-        self.currentFilterString = ""
-
-    def set_filter_string(self, filterString):
-        if self.currentFilterString == filterString:
-            # avoid emitting change events if there's no change
-            return
-        self.currentFilterString = filterString
-
-        def createPattern(expression):
-            expression = "".join([char for char in expression if char.lower() in "abcdefghijklmnopqrstuvwxyz0123456789_*"])
-            expression = expression.replace("*", ".*")
-            return re.compile(expression, re.I)
-
-        self.matchers = [createPattern(i.strip()) for i in filterString.split() if i.strip() != '']
-        self.changed.emit()
-        return self
-
-    def short_name(self, name):
-        try:
-            return name[name.rindex("|") + 1 :]
-        except Exception as err:
-            return name
-
-    def is_match(self, value):
-        if len(self.matchers) == 0:
-            return True
-
-        value = self.short_name(str(value).lower())
-        for pattern in self.matchers:
-            if pattern.search(value) is not None:
-                return True
-
-        return False
-
-
 def build_used_influences_action(parent):
-    from ngSkinTools2.ui import actions
-    from ngSkinTools2.ui.options import config
-
     def toggle():
         config.influences_show_used_influences_only.set(not config.influences_show_used_influences_only())
 
@@ -90,6 +33,39 @@ def build_used_influences_action(parent):
     return result
 
 
+def build_set_influences_sorted_action(parent):
+    from ngSkinTools2.ui import actions
+
+    def toggle():
+        new_value = Config.InfluencesSortDescending
+        if config.influences_sort() == new_value:
+            new_value = Config.InfluencesSortUnsorted
+        config.influences_sort.set(new_value)
+
+    result = actions.define_action(
+        parent,
+        "Show influences sorted",
+        callback=toggle,
+        tooltip="Sort influences by name",
+    )
+
+    @signal.on(config.influences_show_used_influences_only.changed, qtParent=parent)
+    def update():
+        result.setChecked(config.influences_sort() == Config.InfluencesSortDescending)
+
+    result.setCheckable(True)
+    update()
+    return result
+
+
+icon_mask = QtGui.QIcon(":/blendColors.svg")
+icon_dq = QtGui.QIcon(":/rotate_M.png")
+icon_joint = QtGui.QIcon(":/joint.svg")
+icon_joint_disabled = qt.image_icon("joint_disabled.png")
+icon_transform = QtGui.QIcon(":/cube.png")
+icon_transform_disabled = qt.image_icon("cube_disabled.png")
+
+
 def build_view(parent, actions, session, filter):
     """
     :param parent: ui parent
@@ -97,15 +73,6 @@ def build_view(parent, actions, session, filter):
     :type session: ngSkinTools2.ui.session.Session
     :type filter: InfluenceNameFilter
     """
-
-    from ngSkinTools2.ui.options import config
-
-    icon_joint = QtGui.QIcon(":/joint.svg")
-    icon_joint_disabled = qt.image_icon("joint_disabled.png")
-    icon_transform = QtGui.QIcon(":/cube.png")
-    icon_transform_disabled = qt.image_icon("cube_disabled.png")
-    icon_mask = QtGui.QIcon(":/blendColors.svg")
-    icon_dq = QtGui.QIcon(":/rotate_M.png")
 
     icon_locked = QtGui.QIcon(":/Lock_ON.png")
     icon_unlocked = QtGui.QIcon(":/Lock_OFF_grey.png")
@@ -120,20 +87,9 @@ def build_view(parent, actions, session, filter):
 
     tree_items = {}
 
-    def shorten_infl_name(name):
-        try:
-            return cmds.ls(name)[0]
-        except:
-            return name
-
     def build_items(view, items, layer):
         # type: (QtWidgets.QTreeWidget, list[InfluenceInfo], Layer) -> None
         is_group_layer = layer is not None and layer.num_children != 0
-
-        def get_icon(influence, is_joint):
-            if influence.used:
-                return icon_joint if is_joint else icon_transform
-            return icon_joint_disabled if is_joint else icon_transform_disabled
 
         def rebuild_buttons(item, item_id, buttons):
             bar = QtWidgets.QToolBar(parent=parent)
@@ -167,33 +123,6 @@ def build_view(parent, actions, session, filter):
 
             view.setItemWidget(item, 1, bar)
 
-        def wanted_tree_items(items):
-            if layer is None:
-                return
-
-            # calculate "used" regardless as we're displaying it visually even if "show used influences only" is toggled off
-            used = set((layer.get_used_influences() or []))
-            locked = set((layer.locked_influences or []))
-            for i in items:
-                i.used = i.logicalIndex in used
-                i.locked = i.logicalIndex in locked
-
-            if config.influences_show_used_influences_only() and layer is not None:
-                items = [i for i in items if i.used]
-
-            if is_group_layer:
-                items = []
-
-            yield "mask", "[Mask]", icon_mask, []
-            if not is_group_layer and session.state.skin_cluster_dq_channel_used:
-                yield "dq", "[DQ Weights]", icon_dq, []
-
-            for i in items:
-                is_joint = i.path is not None
-                infl_label = shorten_infl_name(i.path) if is_joint else i.name
-                if filter.is_match(infl_label):
-                    yield i.logicalIndex, infl_label, get_icon(i, is_joint), ["locked" if i.locked else "unlocked"]
-
         selected_ids = []
         if session.state.currentLayer.layer:
             selected_ids = session.state.currentLayer.layer.paint_targets
@@ -204,7 +133,14 @@ def build_view(parent, actions, session, filter):
             tree_root = view.invisibleRootItem()
 
             item_index = 0
-            for item_id, displayName, icon, buttons in wanted_tree_items(items):
+            for item_id, displayName, icon, buttons in wanted_tree_items(
+                items=items,
+                include_dq_item=session.state.skin_cluster_dq_channel_used,
+                is_group_layer=is_group_layer,
+                layer=layer,
+                config=config,
+                filter=filter,
+            ):
                 if item_index >= tree_root.childCount():
                     item = QtWidgets.QTreeWidgetItem([displayName])
                 else:
@@ -235,7 +171,8 @@ def build_view(parent, actions, session, filter):
     view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
     actions.addInfluencesActions(view)
     view.addAction(actions.separator(parent, "View Options"))
-    view.addAction(actions.showUsedInfluencesOnly)
+    view.addAction(actions.show_used_influences_only)
+    view.addAction(actions.set_influences_sorted)
     view.setIndentation(10 * scale_multiplier)
     view.header().setStretchLastSection(False)
     view.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
@@ -246,9 +183,23 @@ def build_view(parent, actions, session, filter):
 
     # view.setHeaderHidden(True)
     def refresh_items():
-        build_items(view, list_influences(session.state.currentLayer.selectedSkinCluster), session.state.currentLayer.layer)
+        items = list_influences(session.state.currentLayer.selectedSkinCluster)
 
-    @signal.on(filter.changed, config.influences_show_used_influences_only.changed, session.events.influencesListUpdated)
+        def sort_func(a):
+            """
+            :type a: InfluenceInfo
+            """
+            return a.name
+
+        # items = sorted(items, key=sort_func)
+        build_items(view, items, session.state.currentLayer.layer)
+
+    @signal.on(
+        filter.changed,
+        config.influences_show_used_influences_only.changed,
+        config.influences_sort.changed,
+        session.events.influencesListUpdated,
+    )
     def filter_changed():
         refresh_items()
 
@@ -310,3 +261,55 @@ def build_view(parent, actions, session, filter):
     current_layer_changed()
 
     return view
+
+
+def get_icon(influence, is_joint):
+    if influence.used:
+        return icon_joint if is_joint else icon_transform
+    return icon_joint_disabled if is_joint else icon_transform_disabled
+
+
+def wanted_tree_items(
+    layer,
+    config,
+    is_group_layer,
+    include_dq_item,
+    filter,
+    items,
+):
+    """
+
+    :type items: list[InfluenceInfo]
+    """
+
+    if layer is None:
+        return
+
+    # calculate "used" regardless as we're displaying it visually even if "show used influences only" is toggled off
+    used = set((layer.get_used_influences() or []))
+    locked = set((layer.locked_influences or []))
+    for i in items:
+        i.used = i.logicalIndex in used
+        i.locked = i.logicalIndex in locked
+
+    if config.influences_show_used_influences_only() and layer is not None:
+        items = [i for i in items if i.used]
+
+    if is_group_layer:
+        items = []
+
+    yield "mask", "[Mask]", icon_mask, []
+    if not is_group_layer and include_dq_item:
+        yield "dq", "[DQ Weights]", icon_dq, []
+
+    names = influence_names.unique_names([i.path_name() for i in items])
+    for i, name in zip(items, names):
+        i.unique_name = name
+
+    if config.influences_sort() == Config.InfluencesSortDescending:
+        items = list(sorted(items, key=lambda i: i.unique_name))
+
+    for i in items:
+        is_joint = i.path is not None
+        if filter.is_match(i.path_name()):
+            yield i.logicalIndex, i.unique_name, get_icon(i, is_joint), ["locked" if i.locked else "unlocked"]

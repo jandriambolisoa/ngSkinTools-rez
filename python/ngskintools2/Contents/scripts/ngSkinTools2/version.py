@@ -10,7 +10,7 @@ def pluginVersion():
     Unique version of plugin, e.g. "1.0beta.680". Also represents
     required version of mll plugin. Automatically set at build time
     """
-    pluginVersion_doNotEdit = "2.1.6"
+    pluginVersion_doNotEdit = "2.4.0"
     return pluginVersion_doNotEdit
 
 
@@ -20,7 +20,7 @@ def buildWatermark():
     will be set by a build system and stored in the plugin binary
     """
 
-    return plugin.ngst2License(q=True, watermark=True)
+    return plugin.ngst2Layers(q=True, watermark=True)
 
 
 def uniqueClientId():

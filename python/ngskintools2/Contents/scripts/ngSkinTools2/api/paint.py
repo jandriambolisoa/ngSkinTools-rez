@@ -396,6 +396,11 @@ class PaintTool(PaintSettingsModel):
         if self.brush_radius != new_value:
             self.brush_radius = new_value
 
+    def update_plugin_brush_intensity(self):
+        new_value = plugin.ngst2PaintSettingsCmd(q=True, brushIntensity=True)
+        if self.intensity != new_value:
+            self.intensity = new_value
+
     @classmethod
     def start(cls):
         if cls.__paint_context is None:

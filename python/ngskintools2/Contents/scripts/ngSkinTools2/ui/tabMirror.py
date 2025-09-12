@@ -12,7 +12,7 @@ from ngSkinTools2.ui.widgets import NumberSliderGroup
 log = getLogger("tab paint")
 
 
-def buildUI(parent_window):
+def build_ui(parent_window):
     def build_mirroring_options_group():
         def get_mirror_direction():
             mirror_direction = QtWidgets.QComboBox()
@@ -135,7 +135,7 @@ def buildUI(parent_window):
                 select_mesh(mesh)
 
             @qt.on(set_button.clicked)
-            def set():
+            def set_clicked():
                 set_reference_mesh_from_selection()
                 update_ui()
 
